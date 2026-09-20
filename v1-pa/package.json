@@ -1,0 +1,9 @@
+{
+  "name": "personal-assistant",
+  "version": "1.0.0",
+  "description": "Personal assistant for course schedule management",
+  "type": "module",
+  "dependencies": {
+    "playwright": "^1.61.0"
+  }
+}

@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>宜宾学院课表助手</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 12px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 24px 16px;
+            text-align: center;
+        }
+        .header h1 { font-size: 22px; margin-bottom: 6px; }
+        .header p { opacity: 0.9; font-size: 13px; }
+        .login-section { padding: 30px 20px; text-align: center; }
+        .form-group { margin-bottom: 16px; text-align: left; max-width: 360px; margin-left: auto; margin-right: auto; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #333; font-size: 14px; }
+        .form-group input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            -webkit-appearance: none;
+        }
+        .form-group input:focus { outline: none; border-color: #667eea; }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            max-width: 360px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:active { transform: scale(0.98); }
+        .btn:disabled { opacity: 0.5; }
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+        .captcha-box {
+            max-width: 360px;
+            margin: 0 auto 16px;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            display: none;
+        }
+        .captcha-box img {
+            display: block;
+            max-height: 60px;
+            margin: 8px auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .captcha-box input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 18px;
+            text-align: center;
+            letter-spacing: 4px;
+        }
+        .error-message { color: #e74c3c; margin-top: 8px; font-size: 13px; }
+        .loading { text-align: center; padding: 30px; }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 8px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .schedule-section { padding: 16px 12px; display: none; }
+        .schedule-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .schedule-header h2 { font-size: 18px; color: #333; }
+        .schedule-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .schedule-table th, .schedule-table td { padding: 6px 3px; border: 1px solid #e0e0e0; text-align: center; }
+        .schedule-table th { background: linear-gradient(135deg, #667eea, #764ba2); color: white; font-size: 11px; }
+        .schedule-table td { background: #f8f9fa; }
+        .course-cell { border-radius: 6px; padding: 4px; color: white; font-size: 10px; line-height: 1.3; }
+        .c1 { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .c2 { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .c3 { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .c4 { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+        .c5 { background: linear-gradient(135deg, #fa709a, #fee140); }
+        .c6 { background: linear-gradient(135deg, #a18cd1, #fbc2eb); }
+        .c7 { background: linear-gradient(135deg, #ffecd2, #fcb69f); color: #333; }
+        .c8 { background: linear-gradient(135deg, #89f7fe, #66a6ff); }
+        .export-section { text-align: center; padding: 16px; background: #f8f9fa; border-top: 1px solid #e0e0e0; }
+        .time-label { font-size: 10px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 宜宾学院课表助手</h1>
+            <p>一键导入课表到苹果日历</p>
+        </div>
+        
+        <div class="login-section" id="loginSection">
+            <div class="form-group">
+                <label for="username">学号</label>
+                <input type="text" id="username" placeholder="请输入学号" inputmode="numeric">
+            </div>
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input type="password" id="password" placeholder="请输入密码">
+            </div>
+            
+            <div class="captcha-box" id="captchaBox">
+                <label style="font-weight:600;color:#333;font-size:14px">验证码</label>
+                <img id="captchaImg" src="" alt="验证码" onclick="refreshCaptcha()">
+                <p style="font-size:12px;color:#666;margin:4px 0">点击图片刷新</p>
+                <input type="text" id="captcha" placeholder="请输入验证码" inputmode="text" autocomplete="off">
+            </div>
+            
+            <button class="btn btn-primary" id="loginBtn" onclick="doLogin()">登录</button>
+            <div id="loginError" class="error-message"></div>
+        </div>
+        
+        <div id="loadingBox" style="display:none" class="loading">
+            <div class="spinner"></div>
+            <p id="loadingText">正在获取课表...</p>
+        </div>
+        
+        <div class="schedule-section" id="scheduleSection">
+            <div class="schedule-header">
+                <h2>📅 我的课表</h2>
+                <input type="date" id="semesterStart" value="2026-03-02" style="padding:4px 8px;border:1px solid #ddd;border-radius:6px;font-size:12px">
+            </div>
+            <div id="courseCount" style="text-align:center;padding:6px;font-size:13px;color:#666"></div>
+            <div style="overflow-x:auto">
+                <table class="schedule-table">
+                    <thead>
+                        <tr>
+                            <th>节次</th>
+                            <th>周一</th>
+                            <th>周二</th>
+                            <th>周三</th>
+                            <th>周四</th>
+                            <th>周五</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scheduleBody"></tbody>
+                </table>
+            </div>
+            <div class="export-section">
+                <button class="btn btn-success" onclick="exportToCalendar()">📱 一键导入到苹果日历</button>
+                <p style="margin-top:8px;color:#666;font-size:12px">生成彩色 .ics 文件，双击即可导入</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allCourses = [];
+        let courseColors = {};
+        let colorIndex = 0;
+        const colorClasses = ['c1','c2','c3','c4','c5','c6','c7','c8'];
+
+        // ── 页面加载时自动启动浏览器会话 ──
+        async function init() {
+            showLoading('正在启动浏览器...');
+            try {
+                const resp = await fetch('/api/start');
+                const data = await resp.json();
+                hideLoading();
+                if (data.captchaImage) {
+                    document.getElementById('captchaImg').src = data.captchaImage;
+                    document.getElementById('captchaBox').style.display = 'block';
+                    document.getElementById('captcha').focus();
+                }
+            } catch (e) {
+                hideLoading();
+                document.getElementById('loginError').textContent = '浏览器启动失败，请刷新重试';
+            }
+        }
+
+        function showLoading(text) {
+            document.getElementById('loadingText').textContent = text || '处理中...';
+            document.getElementById('loadingBox').style.display = 'block';
+        }
+        function hideLoading() {
+            document.getElementById('loadingBox').style.display = 'none';
+        }
+
+        async function refreshCaptcha() {
+            try {
+                const resp = await fetch('/api/captcha');
+                const data = await resp.json();
+                if (data.captchaImage) {
+                    document.getElementById('captchaImg').src = data.captchaImage;
+                    document.getElementById('captcha').value = '';
+                }
+            } catch (e) {}
+        }
+
+        async function doLogin() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const captcha = document.getElementById('captcha').value.trim();
+            const errorDiv = document.getElementById('loginError');
+            const loginBtn = document.getElementById('loginBtn');
+            
+            if (!username || !password) {
+                errorDiv.textContent = '请输入学号和密码';
+                return;
+            }
+            
+            errorDiv.textContent = '';
+            loginBtn.disabled = true;
+            loginBtn.textContent = '正在登录...';
+            
+            try {
+                const resp = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, captcha })
+                });
+                const data = await resp.json();
+                
+                if (data.needCaptcha) {
+                    document.getElementById('captchaBox').style.display = 'block';
+                    if (data.captchaImage) {
+                        document.getElementById('captchaImg').src = data.captchaImage;
+                    }
+                    document.getElementById('captcha').value = '';
+                    document.getElementById('captcha').focus();
+                    errorDiv.textContent = data.error || '请输入验证码';
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = '登录';
+                    return;
+                }
+                
+                if (data.success) {
+                    errorDiv.textContent = '';
+                    showLoading('正在获取课表数据...');
+                    const extractResp = await fetch('/api/extract', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+                    const extractData = await extractResp.json();
+                    hideLoading();
+                    
+                    if (extractData.success) {
+                        allCourses = extractData.courses;
+                        document.getElementById('loginSection').style.display = 'none';
+                        document.getElementById('scheduleSection').style.display = 'block';
+                        document.getElementById('courseCount').textContent = `共 ${extractData.count} 条课表记录`;
+                        renderSchedule();
+                    } else {
+                        errorDiv.textContent = '获取课表失败: ' + (extractData.error || '未知错误');
+                    }
+                } else {
+                    errorDiv.textContent = data.error || '登录失败';
+                }
+            } catch (e) {
+                errorDiv.textContent = '网络错误';
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = '登录';
+            }
+        }
+
+        // ── 解析周次 ──
+        function parseWeeks(spec) {
+            const weeks = new Set();
+            spec.split(',').forEach(p => {
+                p = p.trim();
+                if (p.includes('(单)')) {
+                    const [s,e] = p.replace('(单)','').replace('周','').split('-').map(Number);
+                    for (let w = s; w <= e; w++) if (w%2===1) weeks.add(w);
+                } else if (p.includes('(双)')) {
+                    const [s,e] = p.replace('(双)','').replace('周','').split('-').map(Number);
+                    for (let w = s; w <= e; w++) if (w%2===0) weeks.add(w);
+                } else if (p.includes('周')) {
+                    const nums = p.replace('周','').split('-').map(Number);
+                    for (let w = nums[0]; w <= nums[1]; w++) weeks.add(w);
+                }
+            });
+            return weeks;
+        }
+
+        function expandSlot(s) { return s === '5-8' ? ['5-6','7-8'] : [s]; }
+
+        function getColor(name) {
+            if (!courseColors[name]) { courseColors[name] = colorClasses[colorIndex++ % colorClasses.length]; }
+            return courseColors[name];
+        }
+
+        function renderSchedule() {
+            const tbody = document.getElementById('scheduleBody');
+            tbody.innerHTML = '';
+            const grid = {};
+
+            allCourses.forEach(item => {
+                const m = item.full.match(/(.+?)\s+(.+?)\[(\d+)\]\s+(.+?)\s{2,}(.+)/);
+                if (!m) return;
+                const name = m[2];
+                const sched = m[5];
+                const parts = sched.split(',');
+                const dayMap = {'星期1':1,'星期2':2,'星期3':3,'星期4':4,'星期5':5};
+                let dow = item.day || 0, slot = '', weekSpec = '', loc = '';
+                parts.forEach(p => {
+                    p = p.trim();
+                    if (p.startsWith('星期')) dow = dayMap[p];
+                    else if (p.endsWith('节')) slot = p.replace('节','');
+                    else if (p.includes('周')) weekSpec = weekSpec ? weekSpec + ',' + p : p;
+                    else loc = p;
+                });
+                if (!slot) slot = `${item.period_start}-${item.period_start+1}`;
+                expandSlot(slot).forEach(s => {
+                    const key = `${s}-${dow}`;
+                    if (!grid[key]) grid[key] = { name, loc, weeks: parseWeeks(weekSpec) };
+                    else parseWeeks(weekSpec).forEach(w => grid[key].weeks.add(w));
+                });
+            });
+
+            const slots = ['1-2','3-4','5-6','7-8'];
+            const labels = {'1-2':'08:20','3-4':'10:20','5-6':'14:00','7-8':'16:00'};
+            slots.forEach(slot => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td><b>${slot}</b><br><span class="time-label">${labels[slot]}</span></td>`;
+                for (let d = 1; d <= 5; d++) {
+                    const cell = document.createElement('td');
+                    const c = grid[`${slot}-${d}`];
+                    if (c) {
+                        cell.innerHTML = `<div class="course-cell ${getColor(c.name)}"><b>${c.name}</b><br>${c.loc}</div>`;
+                    }
+                    row.appendChild(cell);
+                }
+                tbody.appendChild(row);
+            });
+        }
+
+        async function exportToCalendar() {
+            if (!allCourses.length) { alert('请先获取课表'); return; }
+            const btn = event.target;
+            btn.disabled = true; btn.textContent = '生成中...';
+            try {
+                const resp = await fetch('/api/export-ics', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ courses: allCourses, semester_start: document.getElementById('semesterStart').value })
+                });
+                const data = await resp.json();
+                alert(data.success ? `${data.message}\n\n颜色：\n${Object.entries(data.colors||{}).map(([k,v])=>`${v} → ${k}`).join('\n')}` : '失败: ' + data.message);
+            } catch (e) { alert('失败'); }
+            btn.disabled = false; btn.textContent = '📱 一键导入到苹果日历';
+        }
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Enter') doLogin();
+        });
+
+        init();
+    </script>
+</body>
+</html>

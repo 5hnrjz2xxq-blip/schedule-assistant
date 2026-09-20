@@ -1,0 +1,7 @@
+Mac calendar_gen.py:
+    "9-10": (datetime.time(19, 0),  datetime.time(20, 40))  →  datetime.time(20, 35)
+    add "11": (datetime.time(20, 45), datetime.time(21, 30))
+
+Mac calendar_color.py:
+    "9-10": same fix
+    add "11": same

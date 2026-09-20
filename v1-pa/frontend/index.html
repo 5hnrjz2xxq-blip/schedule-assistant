@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宜宾学院课表助手</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 { font-size: 28px; margin-bottom: 10px; }
+        .header p { opacity: 0.9; font-size: 14px; }
+        .login-section { padding: 40px; text-align: center; }
+        .login-form { max-width: 400px; margin: 0 auto; }
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #333; }
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus { outline: none; border-color: #667eea; }
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(17, 153, 142, 0.4);
+        }
+        .schedule-section { padding: 40px; display: none; }
+        .schedule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .schedule-header h2 { font-size: 24px; color: #333; }
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        .schedule-table th,
+        .schedule-table td {
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .schedule-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+        }
+        .schedule-table td { background: #f8f9fa; }
+        .schedule-table tr:hover td { background: #e9ecef; }
+        .course-cell {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            padding: 8px;
+        }
+        .course-cell.c1 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .course-cell.c2 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .course-cell.c3 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .course-cell.c4 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        .course-cell.c5 { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .course-cell.c6 { background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); }
+        .course-cell.c7 { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); color: #333; }
+        .course-cell.c8 { background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); }
+        .export-section {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+        }
+        .error-message { color: #e74c3c; margin-top: 10px; font-size: 14px; }
+        .loading { display: none; text-align: center; padding: 20px; }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .week-selector { margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .week-selector label { font-weight: 600; color: #333; }
+        .week-selector select {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .time-label { font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 宜宾学院课表助手</h1>
+            <p>一键导入课表到苹果日历</p>
+        </div>
+        
+        <div class="login-section" id="loginSection">
+            <div class="login-form">
+                <div class="form-group">
+                    <label for="username">学号</label>
+                    <input type="text" id="username" placeholder="请输入学号">
+                </div>
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input type="password" id="password" placeholder="请输入密码">
+                </div>
+                <button class="btn btn-primary" onclick="login()">登录</button>
+                <div id="loginError" class="error-message"></div>
+            </div>
+        </div>
+        
+        <div class="schedule-section" id="scheduleSection">
+            <div class="schedule-header">
+                <h2>📅 我的课表</h2>
+                <div class="week-selector">
+                    <label for="weekSelect">选择周次：</label>
+                    <select id="weekSelect" onchange="loadSchedule()">
+                    </select>
+                </div>
+            </div>
+            
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>正在加载课表...</p>
+            </div>
+            
+            <table class="schedule-table" id="scheduleTable">
+                <thead>
+                    <tr>
+                        <th>节次</th>
+                        <th>周一</th>
+                        <th>周二</th>
+                        <th>周三</th>
+                        <th>周四</th>
+                        <th>周五</th>
+                        <th>周六</th>
+                        <th>周日</th>
+                    </tr>
+                </thead>
+                <tbody id="scheduleBody"></tbody>
+            </table>
+            
+            <div class="export-section">
+                <button class="btn btn-success" onclick="exportToCalendar()">
+                    📱 一键导入到苹果日历
+                </button>
+                <p style="margin-top: 10px; color: #666; font-size: 14px;">
+                    点击按钮生成 .ics 文件，双击即可导入到日历应用
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentCourses = [];
+        let allCourses = [];
+        const courseColors = {};
+        let colorIndex = 0;
+        const colors = ['c1','c2','c3','c4','c5','c6','c7','c8'];
+        
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('loginError');
+            
+            if (!username || !password) {
+                errorDiv.textContent = '请输入学号和密码';
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('loginSection').style.display = 'none';
+                    document.getElementById('scheduleSection').style.display = 'block';
+                    initWeekSelector();
+                    loadSchedule();
+                } else {
+                    errorDiv.textContent = data.message;
+                }
+            } catch (error) {
+                errorDiv.textContent = '登录失败，请重试';
+                console.error('Login error:', error);
+            }
+        }
+        
+        function initWeekSelector() {
+            const select = document.getElementById('weekSelect');
+            select.innerHTML = '';
+            for (let i = 1; i <= 20; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `第${i}周`;
+                select.appendChild(option);
+            }
+        }
+        
+        async function loadSchedule() {
+            const loading = document.getElementById('loading');
+            const table = document.getElementById('scheduleTable');
+            
+            loading.style.display = 'block';
+            table.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/schedule');
+                const data = await response.json();
+                
+                if (data.success) {
+                    allCourses = data.data;
+                    renderSchedule(allCourses);
+                    loading.style.display = 'none';
+                    table.style.display = 'table';
+                } else {
+                    alert('加载课表失败: ' + data.message);
+                    loading.style.display = 'none';
+                }
+            } catch (error) {
+                alert('加载课表失败，请重试');
+                console.error('Schedule error:', error);
+                loading.style.display = 'none';
+            }
+        }
+        
+        function getColorForCourse(courseName) {
+            if (!courseColors[courseName]) {
+                courseColors[courseName] = colors[colorIndex % colors.length];
+                colorIndex++;
+            }
+            return courseColors[courseName];
+        }
+        
+        function renderSchedule(courses) {
+            const tbody = document.getElementById('scheduleBody');
+            tbody.innerHTML = '';
+            
+            const timeSlots = ['1-2', '3-4', '5-6', '7-8', '9-10'];
+            const timeLabels = {
+                '1-2': '08:20-10:00',
+                '3-4': '10:20-12:00',
+                '5-6': '14:00-15:40',
+                '7-8': '16:00-17:40',
+                '9-10': '19:00-20:40'
+            };
+            
+            const scheduleGrid = {};
+            courses.forEach(course => {
+                const key = `${course.time_slot}-${course.day_of_week}`;
+                scheduleGrid[key] = course;
+            });
+            
+            timeSlots.forEach(slot => {
+                const row = document.createElement('tr');
+                const slotCell = document.createElement('td');
+                slotCell.innerHTML = `<strong>${slot}节</strong><br><span class="time-label">${timeLabels[slot]}</span>`;
+                row.appendChild(slotCell);
+                
+                for (let day = 1; day <= 7; day++) {
+                    const cell = document.createElement('td');
+                    const course = scheduleGrid[`${slot}-${day}`];
+                    
+                    if (course) {
+                        const colorClass = getColorForCourse(course.course_name);
+                        cell.innerHTML = `
+                            <div class="course-cell ${colorClass}">
+                                <div style="font-weight: bold; margin-bottom: 5px;">${course.course_name}</div>
+                                <div style="font-size: 12px; opacity: 0.9;">${course.teacher}</div>
+                                <div style="font-size: 12px; opacity: 0.9;">${course.location}</div>
+                            </div>
+                        `;
+                    }
+                    row.appendChild(cell);
+                }
+                tbody.appendChild(row);
+            });
+        }
+        
+        async function exportToCalendar() {
+            if (allCourses.length === 0) {
+                alert('请先加载课表');
+                return;
+            }
+            
+            try {
+                const semesterStart = document.getElementById('semesterStart')?.value || '2024-09-02';
+                const response = await fetch('/api/export-ics', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        courses: allCourses,
+                        semester_start: semesterStart
+                    })
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = '课程表.ics';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                    alert('课程表已导出！双击 .ics 文件即可导入到日历应用');
+                } else {
+                    alert('导出失败，请重试');
+                }
+            } catch (error) {
+                alert('导出失败，请重试');
+                console.error('Export error:', error);
+            }
+        }
+        
+        document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') login();
+        });
+    </script>
+</body>
+</html>

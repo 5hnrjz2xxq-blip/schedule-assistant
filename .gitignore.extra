@@ -1,0 +1,8 @@
+v1-pa/node_modules/
+v1-pa/backend/.venv/
+v1-pa/backend/__pycache__/
+v1-pa/cookies.txt
+v1-pa/data/
+v2-personal-assistant/node_modules/
+v2-personal-assistant/backend/__pycache__/
+v2-personal-assistant/data/

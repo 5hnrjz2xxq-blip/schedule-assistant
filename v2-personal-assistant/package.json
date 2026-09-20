@@ -1,0 +1,16 @@
+{
+  "name": "personal-assistant",
+  "version": "1.0.0",
+  "description": "Personal assistant for course schedule management",
+  "type": "module",
+  "dependencies": {
+    "playwright": "^1.61.0"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
